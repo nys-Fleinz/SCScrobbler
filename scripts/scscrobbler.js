@@ -1,6 +1,8 @@
 /** ENVOI DES INFOS QUAND
  * — le nom de la musique change
  * — le bouton play est changé
+ *
+ * Fais par https://github.com/nys-Fleinz.
  */
 const port = chrome.runtime.connect({name: "trackinfo"});
 let debouncer;
@@ -85,13 +87,12 @@ const sendChanges = () => {
         state: getState()
     }
     const formatData = JSON.stringify(data);
-    console.log(data);
-    port.postMessage({ data: data});
+    port.postMessage({ data: formatData});
 }
 
 
 const temoinHook = new MutationObserver((mutations) => {
-    console.log("changements détectés !");
+    console.log("[SCS] Changements détectés !");
     clearTimeout(debouncer);
     debouncer = setTimeout(sendChanges, 300);
 });

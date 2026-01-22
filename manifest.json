@@ -4,7 +4,7 @@
   "version": "1.0",
   "manifest_version": 3,
   "action": {
-    "default_popup": "popup.html"
+    "default_popup": "popup/popup.html"
   },
   "icons": {
     "16": "images/icon16.png",
@@ -12,7 +12,7 @@
     "128": "images/icon128.png"
   },
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "scripts/background.js"
   },
   "content_scripts": [
     {
@@ -20,7 +20,7 @@
         "https://soundcloud.com/*"
       ],
       "js": [
-        "scscrobbler.js"
+        "scripts/scscrobbler.js"
       ]
     }
   ]
