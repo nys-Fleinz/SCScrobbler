@@ -1,27 +1,27 @@
 {
-  "manifest_version": 3,
-  "name": "SoundCloud Scrobbler",
-  "version": "1.0",
+  "name": "SCScrobbler",
   "description": "Renvoie les données lues sur soundcloud.com sur un port local. Utilisé pour le projet https://github.com/nys-Fleinz/soundcloudWidget",
-  "permissions": [
-    "scripting",
-    "activeTab"
-  ],
+  "version": "1.0",
+  "manifest_version": 3,
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "icons": {
+    "16": "images/icon16.png",
+    "48": "images/icon48.png",
+    "128": "images/icon128.png"
+  },
   "background": {
     "service_worker": "background.js"
   },
   "content_scripts": [
     {
-      "matches": ["*://soundcloud.com/*"],
-      "js": ["scscrobbler.js"]
+      "matches": [
+        "https://soundcloud.com/*"
+      ],
+      "js": [
+        "scscrobbler.js"
+      ]
     }
-  ],
-  "host_permissions": [
-    "*://soundcloud.com/*"
-  ],
-  "icons": {
-    "16": "icons/icon16.png",
-    "48": "icons/icon48.png",
-    "128": "icons/icon128.png"
-  }
+  ]
 }
