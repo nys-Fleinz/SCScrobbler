@@ -1,8 +1,18 @@
-let url = "ws://localhost:3000/webhook/";
+let WSPort = 3000;
 let websocket = null;
 
+/**
+ * Retourne le port stocké dans le stockage Chrome.
+ * @return {Promise<number>}
+ */
+const getPortFromStorage = async () => {
+    const result = chrome.storage.local.get(["WSPort"]);
+    return result.WSPort || 3000;
+}
 
 const connect = () => {
+    let url = `ws://localhost:${WSPort}/webhook/`;
+
     if (websocket && (websocket.readyState === websocket.OPEN || websocket.readyState === websocket.CONNECTING)) {
         console.log("BACK ONLINE");
         return;
@@ -19,6 +29,12 @@ const connect = () => {
     })
 }
 
+(async () => {
+    console.log("Démarrage du Service Worker...");
+    WSPort = await getPortFromStorage();
+    connect();
+})();
+
 chrome.runtime.onConnect.addListener(function (port) {
     if (port.name !== "trackinfo") return;
 
@@ -32,4 +48,18 @@ chrome.runtime.onConnect.addListener(function (port) {
     });
 });
 
-connect();
+chrome.runtime.onMessage.addListener((message) => {
+    if (message.port && message.port !== WSPort) {
+        changePort(message.port);
+    }
+})
+
+/**
+ * Changer le port que l'extension utiliser pour se connecter au WebSocket.
+ * @param port
+ */
+const changePort = port => {
+    WSPort = port;
+    websocket = null;
+    connect();
+}

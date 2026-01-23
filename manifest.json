@@ -12,7 +12,8 @@
     "128": "images/icon128.png"
   },
   "background": {
-    "service_worker": "scripts/background.js"
+    "service_worker": "scripts/background.js",
+    "type": "module"
   },
   "content_scripts": [
     {
@@ -23,5 +24,6 @@
         "scripts/scscrobbler.js"
       ]
     }
-  ]
+  ],
+  "permissions": ["storage"]
 }

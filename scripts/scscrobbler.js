@@ -4,7 +4,6 @@
  *
  * Fais par https://github.com/nys-Fleinz.
  */
-
 let port = chrome.runtime.connect({name: "trackinfo"});
 let debouncer;
 
