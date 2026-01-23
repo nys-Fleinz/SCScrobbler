@@ -1,10 +1,11 @@
 /** ENVOI DES INFOS QUAND
  * — le nom de la musique change
- * — le bouton play est changé
+ * — le bouton `play` change
  *
  * Fais par https://github.com/nys-Fleinz.
  */
-const port = chrome.runtime.connect({name: "trackinfo"});
+
+let port = chrome.runtime.connect({name: "trackinfo"});
 let debouncer;
 
 
@@ -20,7 +21,8 @@ const getBadgeData = () => {
     const avatarUrl = avatarElement.querySelector("div > span")
         .style.backgroundImage
         .replace('url("', "")
-        .replace('")', "");
+        .replace('")', "")
+        .replace("-t50x50", "-t500x500");
 
     return { title:titleElement.innerText, author:authorElement.innerText, avatar:avatarUrl }
 }
@@ -64,7 +66,7 @@ const getTrackDuration = () => {
  * @return {number}
  */
 const timeStringToSeconds = timeString => {
-    let timeTab = timeString.trim().split(":").map(Number); // [ 4, 27 ]
+    let timeTab = timeString.trim().split(":").map(Number);
     let totalSeconds = 0;
 
     for(let i = 0; i<timeTab.length-1; i++) {
@@ -91,7 +93,7 @@ const sendChanges = () => {
 }
 
 
-const temoinHook = new MutationObserver((mutations) => {
+const temoinHook = new MutationObserver(() => {
     console.log("[SCS] Changements détectés !");
     clearTimeout(debouncer);
     debouncer = setTimeout(sendChanges, 300);
@@ -99,3 +101,14 @@ const temoinHook = new MutationObserver((mutations) => {
 
 temoinHook.observe(document.querySelector(".playbackSoundBadge"), { childList: true, subtree:true });
 temoinHook.observe(document.querySelector(".playControl"), { childList: true, subtree: true });
+
+
+port.onDisconnect.addListener(() =>  {
+    port = null;
+});
+
+const heartBeat = () => {
+    sendChanges();
+}
+
+setInterval(heartBeat, 20000);
