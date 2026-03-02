@@ -7,24 +7,54 @@
 let port = chrome.runtime.connect({name: "trackinfo"});
 let debouncer;
 
+function getTitle() {
+    const titleElement = document.querySelector(".middle-controls > .content-info-wrapper > yt-formatted-string");
+    return titleElement ? titleElement.innerText : "";
+}
+
+function getAvatar() {
+    const avatarElement = document.querySelector("#thumbnail > #img");
+    return avatarElement ? avatarElement.src : "";
+}
+
+function getData() {
+    const data = document.querySelector(".middle-controls > .content-info-wrapper div.subtitle .byline").title.split(" • ");
+    if (data && data.length > 0) {
+        return {author: data.at(0).split(" et ").join(", "), album: data.at(1), year: data.at(2)};
+    }
+    return {author: "", album: "", year: ""};
+}
+
+function getExplicitBadge() {
+    const explicitElement = document.querySelector('.middle-controls > .content-info-wrapper #badges');
+    return explicitElement ? explicitElement.innerHTML !== '' : false;
+}
+
+function getMusicURL() {
+    const url = document.querySelector("#movie_player > div.ytp-chrome-top > div.ytp-title > div > a");
+    return url ? url.href : "";
+}
+
 /**
  * Return the title, author, and avatar url of the song.
- * @return {{title: string, author: string, avatar: string}}
+ * @return {{title: string, author: string|string, album: string|string, year: string|string, avatar: string, explicit: boolean|boolean, url: string}}
  */
 const getTrack = () => {
-    const titleElement = document.querySelector(".middle-controls > .content-info-wrapper > yt-formatted-string").innerText;
-    const avatarElement = document.querySelector("#thumbnail > #img").src;
-    const data = document.querySelector(".middle-controls > .content-info-wrapper div.subtitle .byline").title.split(" • ");
-    const explicitElement = document.querySelector('.middle-controls > .content-info-wrapper #badges');
-    const url = document.querySelector("#movie_player > div.ytp-chrome-top > div.ytp-title > div > a").href;
+    const title = getTitle();
+    const avatarElement = getAvatar();
+    const {author, album, year} = getData();
+    const explicit = getExplicitBadge();
+    const url = getMusicURL();
 
-    const explicit = explicitElement.innerHTML !== '';
-
-    const author = data.at(0);
-    const album = data.at(1);
-    const year = data.at(2);
-
-    return {title: titleElement, author: author, album: album, year: year, avatar: avatarElement, explicit: explicit, url: url};
+    return {
+        title: title,
+        author: author,
+        album: album,
+        year: year,
+        avatar: avatarElement,
+        explicit: explicit,
+        url: url
+    };
 }
 
 /**
