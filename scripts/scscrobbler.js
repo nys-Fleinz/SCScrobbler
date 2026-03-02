@@ -6,7 +6,6 @@
  */
 let port = chrome.runtime.connect({name: "trackinfo"});
 let debouncer;
-const url = window.location.hostname;
 
 
 /**
@@ -14,17 +13,19 @@ const url = window.location.hostname;
  * @return {{title: string, author: string, avatar: string}}
  */
 const getBadgeData = () => {
-    const titleElement = document.querySelector(".playbackSoundBadge__titleLink").lastElementChild;
+    const titleElement = document.querySelector(".playbackSoundBadge__titleLink");
     const authorElement = document.querySelector(".playbackSoundBadge__lightLink");
     const avatarElement = document.querySelector(".playbackSoundBadge__avatar");
 
+    const title = titleElement.lastElementChild.innerText;
+    const url = titleElement.href;
     const avatarUrl = avatarElement.querySelector("div > span")
         .style.backgroundImage
         .replace('url("', "")
         .replace('")', "")
         .replace("-t50x50", "-t500x500");
 
-    return {title: titleElement.innerText, author: authorElement.innerText, avatar: avatarUrl}
+    return {title: title, author: authorElement.innerText, album: title, avatar: avatarUrl, url: url}
 }
 
 /**
@@ -107,6 +108,11 @@ const temoinHook = new MutationObserver(() => {
 
 temoinHook.observe(document.querySelector(".playbackSoundBadge"), {childList: true, subtree: true});
 temoinHook.observe(document.querySelector(".playControl"), {childList: true, subtree: true});
+document.querySelector(".playbackTimeline__progressWrapper").addEventListener("click", () => {
+    console.log("[SCS] Changement de temps !");
+    clearTimeout(debouncer);
+    debouncer = setTimeout(sendChanges, 300);
+})
 
 
 port.onDisconnect.addListener(() => {
