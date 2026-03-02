@@ -6,25 +6,25 @@
  */
 let port = chrome.runtime.connect({name: "trackinfo"});
 let debouncer;
-const url = window.location.hostname;
-
 
 /**
  * Return the title, author, and avatar url of the song.
  * @return {{title: string, author: string, avatar: string}}
  */
-const getBadgeData = () => {
-    const titleElement = document.querySelector(".playbackSoundBadge__titleLink").lastElementChild;
-    const authorElement = document.querySelector(".playbackSoundBadge__lightLink");
-    const avatarElement = document.querySelector(".playbackSoundBadge__avatar");
+const getTrack = () => {
+    const titleElement = document.querySelector(".middle-controls > .content-info-wrapper > yt-formatted-string").innerText;
+    const avatarElement = document.querySelector("#thumbnail > #img").src;
+    const data = document.querySelector(".middle-controls > .content-info-wrapper div.subtitle .byline").title.split(" • ");
+    const explicitElement = document.querySelector('.middle-controls > .content-info-wrapper #badges');
+    const url = document.querySelector("#movie_player > div.ytp-chrome-top > div.ytp-title > div > a").href;
 
-    const avatarUrl = avatarElement.querySelector("div > span")
-        .style.backgroundImage
-        .replace('url("', "")
-        .replace('")', "")
-        .replace("-t50x50", "-t500x500");
+    const explicit = explicitElement.innerHTML !== '';
 
-    return {title: titleElement.innerText, author: authorElement.innerText, avatar: avatarUrl}
+    const author = data.at(0);
+    const album = data.at(1);
+    const year = data.at(2);
+
+    return {title: titleElement, author: author, album: album, year: year, avatar: avatarElement, explicit: explicit, url: url};
 }
 
 /**
@@ -32,9 +32,9 @@ const getBadgeData = () => {
  * @return {string} "PAUSED" or "PLAYING"
  */
 const getState = () => {
-    const playButton = document.querySelector(".playControl");
-    const state = playButton.querySelector("div > span");
-    if (state.textContent === "Pause current") {
+    const playButton = document.querySelector('#play-pause-button');
+    const state = playButton.title;
+    if (state === "Mettre en pause") {
         return "PLAYING";
     }
     return "PAUSED";
@@ -45,8 +45,8 @@ const getState = () => {
  * @return {number} Current time progress in `seconds`.
  */
 const getCurrentTime = () => {
-    const timeElement = document.querySelector(".playbackTimeline__timePassed");
-    const timeString = timeElement.lastElementChild.textContent;
+    const timeElement = document.querySelector("#left-controls > span");
+    const timeString = timeElement.innerText.split(' / ')[0]
     return timeStringToSeconds(timeString);
 };
 
@@ -55,9 +55,9 @@ const getCurrentTime = () => {
  * @return {number} `seconds` of the track.
  */
 const getTrackDuration = () => {
-    const durationElement = document.querySelector(".playbackTimeline__duration");
-    const durationString = durationElement.lastElementChild.textContent;
-    return timeStringToSeconds(durationString);
+    const timeElement = document.querySelector("#left-controls > span");
+    const timeString = timeElement.innerText.split(' / ')[1]
+    return timeStringToSeconds(timeString);
 }
 
 /**
@@ -77,19 +77,13 @@ const timeStringToSeconds = timeString => {
     return totalSeconds;
 }
 
-const scrapeYoutubeMusic = () => {
-    const title = document.querySelector("#layout > ytmusic-player-bar > div.middle-controls.style-scope.ytmusic-player-bar > div.content-info-wrapper.style-scope.ytmusic-player-bar > yt-formatted-string")
-    return title;
-}
-
 
 /**
  * Format data and send it to the service worker script.
  */
 const sendChanges = () => {
-
     const data = {
-        track: getBadgeData(),
+        track: getTrack(),
         currentTime: getCurrentTime(),
         trackDuration: getTrackDuration(),
         state: getState()
@@ -100,13 +94,13 @@ const sendChanges = () => {
 
 
 const temoinHook = new MutationObserver(() => {
-    console.log("[SCS] Changements détectés !");
     clearTimeout(debouncer);
+    console.log("[YTS] Changements détectés !");
     debouncer = setTimeout(sendChanges, 300);
 });
 
-temoinHook.observe(document.querySelector(".playbackSoundBadge"), {childList: true, subtree: true});
-temoinHook.observe(document.querySelector(".playControl"), {childList: true, subtree: true});
+temoinHook.observe(document.querySelector(".middle-controls"), {childList: true, subtree: true});
+temoinHook.observe(document.querySelector("#play-pause-button"), {childList: true, subtree: true});
 
 
 port.onDisconnect.addListener(() => {

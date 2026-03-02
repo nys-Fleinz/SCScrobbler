@@ -17,12 +17,12 @@
   },
   "content_scripts": [
     {
-      "matches": [
-        "https://soundcloud.com/*"
-      ],
-      "js": [
-        "scripts/scscrobbler.js"
-      ]
+      "matches": ["https://soundcloud.com/*"],
+      "js": ["scripts/scscrobbler.js"]
+    },
+    {
+      "matches": ["https://music.youtube.com/*"],
+      "js": ["scripts/ytscrobbler.js"]
     }
   ],
   "permissions": ["storage"]
