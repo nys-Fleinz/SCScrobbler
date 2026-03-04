@@ -25,7 +25,7 @@ const getBadgeData = () => {
         .replace('")', "")
         .replace("-t50x50", "-t500x500");
 
-    return {title: title, author: authorElement.innerText, album: title, avatar: avatarUrl, url: url}
+    return {title: title, author: authorElement.innerText, avatar: avatarUrl, url: url}
 }
 
 /**
@@ -76,11 +76,6 @@ const timeStringToSeconds = timeString => {
 
     totalSeconds += timeTab[timeTab.length - 1];
     return totalSeconds;
-}
-
-const scrapeYoutubeMusic = () => {
-    const title = document.querySelector("#layout > ytmusic-player-bar > div.middle-controls.style-scope.ytmusic-player-bar > div.content-info-wrapper.style-scope.ytmusic-player-bar > yt-formatted-string")
-    return title;
 }
 
 

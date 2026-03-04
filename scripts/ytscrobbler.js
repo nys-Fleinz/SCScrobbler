@@ -4,7 +4,7 @@
  *
  * Fais par https://github.com/nys-Fleinz.
  */
-let port = chrome.runtime.connect({name: "trackinfo"});
+let port = null;
 let debouncer;
 
 function getTitle() {
@@ -18,9 +18,14 @@ function getAvatar() {
 }
 
 function getData() {
-    const data = document.querySelector(".middle-controls > .content-info-wrapper div.subtitle .byline").title.split(" • ");
-    if (data && data.length > 0) {
-        return {author: data.at(0).split(" et ").join(", "), album: data.at(1), year: data.at(2)};
+    const data = document.querySelector(".middle-controls > .content-info-wrapper div.subtitle .byline");
+    if (data) {
+        let splitedData = data.title.split(" • ");
+        return {
+            author: splitedData[0] ? splitedData[0].split(" et ").join(", ") : "",
+            album: splitedData[1] || "",
+            year: splitedData[2] || ""
+        };
     }
     return {author: "", album: "", year: ""};
 }
@@ -63,6 +68,7 @@ const getTrack = () => {
  */
 const getState = () => {
     const playButton = document.querySelector('#play-pause-button');
+    if (!playButton) return "PAUSED";
     const state = playButton.title;
     if (state === "Mettre en pause") {
         return "PLAYING";
@@ -76,6 +82,7 @@ const getState = () => {
  */
 const getCurrentTime = () => {
     const timeElement = document.querySelector("#left-controls > span");
+    if (!timeElement) return 0;
     const timeString = timeElement.innerText.split(' / ')[0]
     return timeStringToSeconds(timeString);
 };
@@ -86,6 +93,7 @@ const getCurrentTime = () => {
  */
 const getTrackDuration = () => {
     const timeElement = document.querySelector("#left-controls > span");
+    if (!timeElement) return 0;
     const timeString = timeElement.innerText.split(' / ')[1]
     return timeStringToSeconds(timeString);
 }
@@ -96,6 +104,7 @@ const getTrackDuration = () => {
  * @return {number}
  */
 const timeStringToSeconds = timeString => {
+    if(!timeString || timeString === "") return -1;
     let timeTab = timeString.trim().split(":").map(Number);
     let totalSeconds = 0;
 
@@ -111,17 +120,42 @@ const timeStringToSeconds = timeString => {
 /**
  * Format data and send it to the service worker script.
  */
-const sendChanges = () => {
-    const data = {
-        track: getTrack(),
-        currentTime: getCurrentTime(),
-        trackDuration: getTrackDuration(),
-        state: getState()
+const sendChanges = async () => {
+    if (!chrome.runtime?.id) return;
+
+    if(!port) {
+        if(!await connectChromePort()) return;
     }
-    const formatData = JSON.stringify(data);
-    port.postMessage({data: formatData});
+
+    try {
+        const data = {
+            track: getTrack(),
+            currentTime: getCurrentTime(),
+            trackDuration: getTrackDuration(),
+            state: getState()
+        }
+        const formatData = JSON.stringify(data);
+        port.postMessage({data: formatData});
+    } catch (e) {
+        port = null;
+    }
 }
 
+/**
+ * Se connecte au port chrome nommé `trackinfo`
+ */
+async function connectChromePort() {
+    try {
+        if (!chrome.runtime?.id) return false;
+        port = chrome.runtime.connect({name: "trackinfo"});
+        port.onDisconnect.addListener(() => { port = null; });
+        console.log("[YTS] Port connecté.");
+        return true;
+    } catch (e) {
+        console.error("[YTS] Port erreur: " + e);
+        return false;
+    }
+}
 
 const temoinHook = new MutationObserver(() => {
     clearTimeout(debouncer);
@@ -129,16 +163,24 @@ const temoinHook = new MutationObserver(() => {
     debouncer = setTimeout(sendChanges, 300);
 });
 
-temoinHook.observe(document.querySelector(".middle-controls"), {childList: true, subtree: true});
-temoinHook.observe(document.querySelector("#play-pause-button"), {childList: true, subtree: true});
+const startObservation = () => {
+    const controls = document.querySelector(".middle-controls");
+    const playBtn = document.querySelector("#play-pause-button");
 
+    if (controls && playBtn) {
+        temoinHook.observe(controls, {childList: true, subtree: true});
+        temoinHook.observe(playBtn, {attributes: true, attributeFilter: ["title"]});
+        sendChanges();
+    } else {
+        setTimeout(startObservation, 1000);
+    }
+}
 
-port.onDisconnect.addListener(() => {
-    port = null;
-});
+startObservation();
 
-const heartBeat = () => {
-    sendChanges();
+const heartBeat = async () => {
+    await sendChanges();
+    console.log("[YTS] HeartBeat sent.");
 }
 
 setInterval(heartBeat, 20000);

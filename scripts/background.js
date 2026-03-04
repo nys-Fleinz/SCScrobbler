@@ -46,6 +46,11 @@ chrome.runtime.onConnect.addListener(function (port) {
         websocket.send(msg.data);
         console.log("Message received:\n" + msg.data);
     });
+
+    port.onDisconnect.addListener(() => {
+        console.log("L'onglet changé, suppression status.");
+        websocket.send({state: 'PAUSED'});
+    });
 });
 
 chrome.runtime.onMessage.addListener((message) => {
